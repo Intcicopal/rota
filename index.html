@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+
+
+    <script>
+        async function carregarDados() {
+            const url = "https://intcicopal.github.io/rota/users.json";
+
+            const res = await fetch(url);
+            const usuarios = await res.json();
+
+            const nomeProcurado = "Maria";
+
+            const usuario = usuarios.find(u => u.nome === nomeProcurado);
+
+            console.log(usuario);
+        }
+
+
+        carregarDados()
+
+    </script>
+</body>
+
+</html>
