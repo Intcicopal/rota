@@ -4,18 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Int. Comercial | Login</title>
 
+    <link rel="stylesheet" href="../../shared/base.css">
     <link rel="stylesheet" href="./index.css">
 </head>
 
 <body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>Bem-vindo</h1>
+            <p class="subtitle">Acesse sua conta para continuar</p>
 
-    <form id="loginForm">
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Usuário</label>
+                    <input type="text" name="user" placeholder="usuario" required />
+                </div>
+
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" name="password" placeholder="senha" required />
+                </div>
+
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+    <!-- <form id="loginForm">
         <input type="text" name="user" placeholder="Usuário" required autofocus />
         <input type="password" name="password" placeholder="Senha" required />
         <button type="submit">Entrar</button>
-    </form>
+    </form> -->
 
 
     <script type="module">

@@ -1,7 +1,8 @@
 [
   {
-    "user": "juliano.pirs",
+    "user": "juliano.piris",
     "password": 123,
+    "role": "Admin",
     "object": {
       "a": "b",
       "c": "d"

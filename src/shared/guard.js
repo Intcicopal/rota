@@ -10,6 +10,6 @@
         if (!dados || !dados.user) throw new Error("Sessão inválida");
 
     } catch (e) {
-        window.location.href = "src/pages/login/";
+        window.location.href = "./src/pages/login/";
     }
 })();

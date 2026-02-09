@@ -1,5 +1,5 @@
 export async function signin(dados) {
-    const url = "https://intcicopal.github.io/rota/db/users.json";
+    const url = "https://intcicopal.github.io/rota/src/db/users.json";
 
     try {
         const response = await fetch(url);
