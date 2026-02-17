@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Roteirização</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --bg: #f4f6f9;
+            --panel: #ffffff;
+            --accent: #0f62fe;
+            --muted: #8b8f98;
+            --card-shadow: 0 6px 18px rgba(12, 20, 40, 0.06);
+            --success: #2ecc71;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, "Segoe UI", Roboto, Arial;
+            background: var(--bg);
+            color: #1f2937
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* left column */
+        .sidebar {
+            width: 20vw;
+            min-width: 350px;
+            max-width: 380px;
+            padding: 5px;
+            background: var(--panel);
+            box-shadow: var(--card-shadow);
+            border-radius: 10px;
+            margin: 5px 0 5px 5px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar h1 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--accent)
+        }
+
+        .controls {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .control-full {
+            grid-column: 1/-1
+        }
+
+        select,
+        input,
+        button,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ee;
+            background: #fff;
+            font-size: 14px
+        }
+
+        option[disabled] {
+            background: #f3f4f6;
+            color: #6b7280 !important;
+            font-style: italic;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        label.small {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            display: block
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: #fff;
+            border: none
+        }
+
+        button.primary:hover {
+            background: #2866d7;
+        }
+
+        button.ghost {
+            background: transparent;
+            border: 1px solid #e6e9ee
+        }
+
+        button.ghost:hover {
+            background: #d4e1f3;
+            border: 1px solid #e6e9ee
+        }
+
+        .file {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .file input[type=file] {
+            flex: 1;
+            width: 100%;
+        }
+
+        .info {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .small-muted {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        /* resumo table card */
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 250, 0.98));
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+            border: 1px solid #eef2f6;
+        }
+
+        .card h3 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+            color: #0b3b66
+        }
+
+        table#resumoTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        table#resumoTable thead th {
+            background: #f1f6ff;
+            color: #0b3b66;
+            padding: 10px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: center
+        }
+
+        table#resumoTable tbody td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #f1f4f9;
+            cursor: pointer;
+            transition: all .18s ease
+        }
+
+        table#resumoTable tbody tr:nth-child(even) {
+            background: #fbfdff
+        }
+
+        /* zebra */
+        table#resumoTable tbody td.count-change {
+            transform: translateY(0);
+            transition: transform .25s ease, opacity .25s ease
+        }
+
+        #resumoTable td {
+            user-select: none;
+        }
+
+        .cell-selected {
+            background: var(--accent) !important;
+            color: #fff !important;
+            font-weight: 700;
+            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.06)
+        }
+
+        .cell-faded {
+            opacity: 0.25;
+        }
+
+        table#resumoTable tfoot td {
+            padding: 10px;
+            text-align: center;
+            background: #fafafa;
+            font-weight: 700;
+            border-top: 2px solid #eef2f6
+        }
+
+        /* right (map + list) */
+        .main {
+            flex: 1;
+            margin: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mapWrap {
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #e8eef6
+        }
+
+        #map {
+            width: 100%;
+            height: 100%
+        }
+
+        .listPane {
+            display: flex;
+            gap: 12px
+        }
+
+        .list {
+            /* width: 360px;
+            min-width: 280px;
+            max-width: 380px;
+            background: var(--panel);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: auto; */
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+            max-width: 250px;
+            z-index: 900;
+            /* display: none; */
+        }
+
+        .list h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #0b3b66
+        }
+
+        .item {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #eef2f6;
+            margin-bottom: 8px;
+            background: #fff
+        }
+
+        .item .title {
+            font-weight: 600
+        }
+
+        .item .meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px
+        }
+
+
+
+        .leaflet-bottom {
+            z-index: 0;
+        }
+
+        .leaflet-control-container {
+            display: none;
+        }
+
+        .dashboard-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+            padding: 12px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .dashboard-header button {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .dashboard-table-wrapper {
+            overflow-x: auto;
+            max-height: 350px;
+        }
+
+        .tabela-corporativa {
+            border-collapse: collapse;
+            width: max-content;
+            font-size: 13px;
+        }
+
+        .tabela-corporativa th {
+            position: sticky;
+            top: 0;
+            background: #1f2937;
+            color: #fff;
+            padding: 6px 10px;
+            z-index: 2;
+        }
+
+        .tabela-corporativa td {
+            border: 1px solid #e5e7eb;
+            padding: 6px 10px;
+            text-align: center;
+        }
+
+        .tabela-corporativa tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .tabela-corporativa td.clicavel {
+            cursor: pointer;
+        }
+
+        .tabela-corporativa td.clicavel:hover {
+            background: #e0f2fe;
+            font-weight: bold;
+        }
+
+        .tabela-corporativa tfoot td {
+            background: #f3f4f6;
+            font-weight: bold;
+        }
+
+        /* aplica quando você usar className: 'popup-transparente' no bindPopup */
+        .leaflet-popup.popup-transparente .leaflet-popup-content-wrapper {
+            background-color: rgba(255, 255, 255, 0.5) !important;
+            /* 50% */
+            /* box-shadow: none !important; */
+            /* remove sombra se quiser */
+            backdrop-filter: blur(2.5px);
+            /* opcional: efeito vidro */
+        }
+
+        /* a 'pontinha' do popup (tip) */
+        .leaflet-popup.popup-transparente .leaflet-popup-tip {
+            /* background: rgba(255, 255, 255, 0.1) !important; */
+            box-shadow: none !important;
+        }
+
+        /* garante que o conteúdo (texto) continue opaco e legível */
+        .leaflet-popup.popup-transparente .leaflet-popup-content {
+            color: #000;
+            opacity: 1 !important;
+        }
+
+        /* opcional: reduz borda que some por causa do rgba */
+        .leaflet-popup.popup-transparente .leaflet-popup-content-wrapper,
+        .leaflet-popup.popup-transparente .leaflet-popup-tip {
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        /* Overlay */
+        .overlay-sidebar {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+            z-index: 9998;
+        }
+
+        /* Sidebar */
+        .sidebar-prime {
+            position: fixed;
+            top: 0;
+            right: -520px;
+            width: 520px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, .15);
+            transition: right .3s ease;
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Aberto */
+        .sidebar-prime.open {
+            right: 0;
+        }
+
+        .overlay-sidebar.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Header */
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .sidebar-header button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            width: 10%;
+            cursor: pointer;
+        }
+
+        /* ===== Sidebar Conteúdo ===== */
+        #sidebarConteudo,
+        .sidebar-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 18px 16px;
+            background: #f8fafc;
+            overflow-y: auto;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        /* ===== Timeline ===== */
+        .obs-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Linha vertical suave */
+        .obs-item {
+            position: relative;
+            /* padding-left: 36px; */
+        }
+
+        .obs-item::before {
+            content: "";
+            position: absolute;
+            left: 16px;
+            top: 4px;
+            bottom: -22px;
+            width: 1px;
+            background: linear-gradient(to bottom,
+                    #cbd5f5,
+                    transparent);
+        }
+
+        .obs-item:last-child::before {
+            display: none;
+        }
+
+        /* ===== Card ===== */
+        .obs-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 14px;
+            padding: 14px 16px 16px;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.04),
+                0 10px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            backdrop-filter: blur(2px);
+        }
+
+        /* ===== Header ===== */
+        .obs-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        /* Ícone flutuante */
+        .obs-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #fff;
+            box-shadow:
+                0 6px 14px rgba(0, 0, 0, 0.12);
+            flex-shrink: 0;
+        }
+
+        /* Cores refinadas */
+        .obs-icon.negado {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+
+        .obs-icon.aprovado {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+        }
+
+        .obs-icon.ajuste {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        .obs-icon.info {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+
+        /* Usuário */
+        .obs-user {
+            font-weight: 600;
+            font-size: 13px;
+            color: #0f172a;
+        }
+
+        /* Data */
+        .obs-meta {
+            font-size: 11px;
+            color: #64748b;
+            /* margin-bottom: 10px; */
+        }
+
+        /* Texto */
+        .obs-msg {
+            font-size: 13px;
+            color: #334155;
+            line-height: 1.55;
+            /* white-space: pre-wrap; */
+        }
+
+        /* ===== Histórico ===== */
+        .obs-sub {
+            margin-top: 14px;
+            padding-left: 18px;
+            border-left: 1px dashed #c7d2fe;
+        }
+
+        .obs-sub .obs-card {
+            background: #f9fafb;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.03),
+                0 6px 14px rgba(0, 0, 0, 0.04);
+        }
+
+        /* ===== Scroll elegante ===== */
+        #sidebarConteudo::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebarConteudo::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.35);
+            border-radius: 10px;
+        }
+
+        #sidebarConteudo::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* responsive */
+        @media (max-width:980px) {
+            .sidebar {
+                display: none
+            }
+
+            .list {
+                display: none
+            }
+
+            .main {
+                margin: 18px
+            }
+        }
+
+        .link-rota {
+            color: #2563eb;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .link-rota:hover {
+            color: #1d4ed8;
+        }
+    </style>
+
+    <script src="../../src/shared/template.js"></script>
+</head>
+
+<body>
+    <div id="head"></div>
+
+    <div class="app">
+        <!-- LEFT: controls + resumo -->
+        <aside class="sidebar" role="region" aria-label="Controles">
+            <div class="card">
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+                    <div style="flex:1">
+                        <label class="small">Rotas (múltipla)</label>
+                        <select id="rotaSelect" multiple size="15" style="min-width:100%"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:8px">
+                <!-- <h3>Resumo (clique para filtrar)</h3> -->
+                <!-- Table existing structure; we only update tbody/tfoot -->
+                <table id="resumoTable" aria-label="Resumo por Dia e Frequencia">
+                    <thead>
+                        <tr>
+                            <th>Dia</th>
+                            <th>M</th>
+                            <th>S</th>
+                            <th>QI</th>
+                            <th>QP</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resumoBody"></tbody>
+                    <tfoot id="resumoFoot"></tfoot>
+                </table>
+            </div>
+
+            <div class="card" style="margin-top:8px">
+                <div style="display:flex;flex-direction: column; gap:8px;margin-bottom:10px">
+                    <div style="width: 95%;">
+                        <label class="small">Buscar (softsite / código)</label>
+                        <input class="buscaSoftsite" id="buscaSoftsite" placeholder="ex: 0023251" />
+                    </div>
+                    <div style="display:flex;flex-direction:row;gap:6px">
+                        <button id="btnBuscar" class="primary" title="Buscar">Abrir</button>
+                        <button id="btnReset" class="ghost" title="Resetar">Reset</button>
+                        <button id="btnMedir" class="ghost">📏 Medir</button>
+                        <button id="btnLimparMed" class="ghost">🧹 Limpar</button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="card" style="margin-top:auto">
+                <div class="file" style="margin-bottom:8px">
+                    <label class="small">CSV</label>
+                    <input id="fileInput" type="file" accept=".csv" />
+                </div>
+                <div style="display:flex;flex-direction:row;gap:6px">
+                    <button id="btnExportExcel" class="ghost" style="font-size: 1.5rem; padding: 0;">
+                        📤
+                    </button>
+                    <button class="ghost" onclick="exportarMapaResumoPNG()" style="font-size: 1.5rem; padding: 0;">
+                        📸
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN: map + list -->
+        <main id="exportWrapper" class="main">
+            <div class="mapWrap">
+                <div id="map"></div>
+            </div>
+
+            <div style="display:flex;gap:12px">
+                <div class="list" style="flex:1">
+                    <h4>Legenda</h4>
+                    <div id="legenda">Selecione rotas para ver cores</div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+    <!-- Sidebar estilo PrimeReact -->
+    <div id="overlaySidebar" class="overlay-sidebar"></div>
+
+    <aside id="sidebarObs" class="sidebar-prime">
+        <div class="sidebar-header">
+            <span>Observações</span>
+            <button id="btnFecharSidebar">✕</button>
+        </div>
+
+        <div class="sidebar-content" style="margin-top:8px">
+            <div style="display:flex;flex-direction: column; flex: 1;gap:8px;margin-bottom:10px">
+                <div class="controle card">
+                    <div style="width: 95%;">
+                        <label class="small">Rota</label>
+                        <input id="novaRota" placeholder="ex: 0023251" onchange="log()" />
+                    </div>
+                    <div style="width: 98.5%;">
+                        <label class="small">Dia Vista</label>
+                        <select id="novoDiaVisita" onchange="log()">
+                            <option value="" selected disabled hidden>Selecione</option>
+                            <option value="SEG">Segunda</option>
+                            <option value="TER">Terça</option>
+                            <option value="QUA">Quarta</option>
+                            <option value="QUI">Quinta</option>
+                            <option value="SEX">Sexta</option>
+                        </select>
+                    </div>
+                    <div style="width: 98.5%;">
+                        <label class="small">Frequencia Visita</label>
+                        <select id="novaFreqVisita" onchange="log()">
+                            <option value="" selected disabled hidden>Selecione</option>
+                            <option value="QP">QP</option>
+                            <option value="QI">QI</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                        </select>
+                    </div>
+                    <div style="width: 95%;">
+                        <label class="small">Observação</label>
+                        <textarea id="NovaOBS" style="height: 80px;"></textarea>
+                    </div>
+                    <div id="logAlteracoes" style="height: 48px; margin-top:10px;font-size:12px;color:#334155;"></div>
+                    <!-- <div style=" display: flex; justify-content: space-around;">
+
+                    </div> -->
+                    <button id="btnSalvarOBS" class="primary" style="margin-top:8px;width:100%">Salvar
+                        alterações</button>
+
+                </div>
+
+                <div id="sidebarConteudo" class="">
+                    <!-- OBS entra aqui -->
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- libs -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+
+    <script>
+        // -------------------------
+        // Config e Estado
+        // -------------------------
+        const diasOrdem = ["SEG", "TER", "QUA", "QUI", "SEX"];
+        const frequencias = ["M", "S", "QI", "QP"];
+        const estadoFiltro = {
+            rotas: new Set(),
+            dia: null,
+            freq: null
+        };
+
+        let indexEdicao = null;
+        let pontoEdicao = null;
+
+        let headersOriginais = [];
+
+        const corRotaBase = '#7F7F7F';
+        const coresRotas = ['#7F7F7F', "#FF7F0E", "#1F77B4", "#2CA02C", "#D62728", "#9467BD", "#8C564B", "#E377C2", "#BCBD22", "#17BECF", "#393B79", "#637939", "#8C6D31", "#843C39", "#7B4173", "#3182BD", "#31A354", "#756BB1", "#636363", "#E6550D"];
+        const borderStyle = { 'SEG': '#000000', 'TER': '#0033CC', 'QUA': '#00FF00', 'QUI': '#FF00FF', 'SEX': '#CC0000' };
+
+        const freqStyle = {
+            'S': { radius: 8, dash: '' },
+            'QP': { radius: 8, dash: '4 8' },
+            'QI': { radius: 8, dash: '6 10' },
+            'M': { radius: 8, dash: '2 5' },
+            '': { radius: 8, dash: '2 5' }
+        };
+
+        let map, dados = [], filtrados = [], marcadores = [], modoMedicao = false, pontosMed = [], linhaMed = null, popupMed = null;
+
+        // -------------------------
+        // Inicializa mapa
+        // -------------------------
+        function initMap() {
+            map = L.map('map', { preferCanvas: true }).setView([-16.7090, -49.1069], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                crossOrigin: true,
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+
+            const fixos = [
+                { nome: "CICOPAL - Matriz", lat: -16.7090, lng: -49.1069, cor: "#1E22A8" },
+                { nome: "CARPER - DF", lat: -16.0344, lng: -48.0351, cor: "#1E22A8" },
+                { nome: "SNACKS - Matriz", lat: -1.3076, lng: -48.2178, cor: "#1E22A8" }
+            ];
+
+            // fixos.forEach(p => {
+            //     L.circleMarker([p.lat, p.lng], {
+            //         radius: 8, color: p.cor, fillColor: p.cor, fillOpacity: 0.9
+            //     }).bindPopup(`<b>${p.nome}</b>`).addTo(map);
+            // });
+        }
+
+        // -------------------------
+        // Toast
+        // -------------------------
+
+
+
+        // -------------------------
+        // Normaliza cabeçalho -> uppercase trimmed
+        // -------------------------
+        function normalizeRow(r) {
+            const out = {};
+            for (const k in r) out[k.trim().toUpperCase()] = r[k];
+            // parse coords
+            out.LATITUDE = parseFloat(out.LATITUDE);
+            out.LONGITUDE = parseFloat(out.LONGITUDE);
+            return out;
+        }
+
+        // -------------------------
+        // Preencher select rotas (optgroup por supervisor)
+        // -------------------------
+        function preencherSelectRotas() {
+            const sel = document.getElementById('rotaSelect');
+            sel.innerHTML = '';
+
+            // build list unique by gerente > supervisor > rota
+            const mapGer = new Map();
+
+            dados.forEach(d => {
+                const gerente = (d['NOME GERENTE'] || d['GERENTE VENDAS'] || 'SEM GERENTE').trim();
+                const sup = (d['NOME SUPERVISOR'] || 'SEM SUP').trim();
+                const rota = (d['ROTA REAL'] || '').toString().trim();
+
+                if (!mapGer.has(gerente)) mapGer.set(gerente, new Map());
+                const mapSup = mapGer.get(gerente);
+                if (!mapSup.has(sup)) mapSup.set(sup, new Map());
+
+                const mapRota = mapSup.get(sup);
+                if (!mapRota.has(rota)) mapRota.set(rota, d);
+            });
+
+            // sort gerentes
+            const gerentes = Array.from(mapGer.keys()).sort();
+
+            gerentes.forEach(ger => {
+                // 🟣 optgroup nível GERENTE
+                const grpGer = document.createElement('optgroup');
+                grpGer.label = ger.toUpperCase();
+
+                const mapSup = mapGer.get(ger);
+                const sups = Array.from(mapSup.keys()).sort();
+
+                sups.forEach(sup => {
+                    // 🔵 linha separadora do supervisor (não selecionável)
+                    const supOpt = document.createElement('option');
+                    supOpt.disabled = true;
+                    supOpt.style.fontWeight = '600';
+                    supOpt.style.color = '#444';
+                    supOpt.textContent = `» ${sup}`;
+                    grpGer.appendChild(supOpt);
+
+                    // 🟢 rotas igual já era antes
+                    const rotas = Array.from(mapSup.get(sup).keys()).sort();
+                    rotas.forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r;
+
+                        const drow = mapSup.get(sup).get(r);
+                        const rca = drow['RCA VENDEDOR'] || '';
+                        const vend = drow['NOME VENDEDOR'] || '';
+                        const perfil = drow['PERFIL'] || '';
+
+                        opt.textContent = `   ${r}—${rca}—[${perfil}] ${vend}`;
+                        grpGer.appendChild(opt);
+                    });
+                });
+
+                sel.appendChild(grpGer);
+            });
+        }
+
+        function aplicarFiltroTabela() {
+
+            const filtrados = dados.filter(d => {
+
+                const rotaOk =
+                    estadoFiltro.rotas.size === 0 ||
+                    estadoFiltro.rotas.has(d["ROTA REAL"]);
+
+                const diaOk =
+                    !estadoFiltro.dia ||
+                    d["DIA VISITA REAL"] === estadoFiltro.dia;
+
+                const freqOk =
+                    !estadoFiltro.freq ||
+                    d["FREQ VISITA REAL"] === estadoFiltro.freq;
+
+                return rotaOk && diaOk && freqOk;
+            });
+
+            plotarPontos(filtrados);
+        }
+        function destacarTabela() {
+            document.querySelectorAll(".cel-filtro").forEach(td => {
+
+                const ativa =
+                    estadoFiltro.rotas.has(td.dataset.rota) &&
+                    td.dataset.dia === estadoFiltro.dia &&
+                    td.dataset.freq === estadoFiltro.freq;
+
+                td.classList.toggle("celula-destaque", ativa);
+                td.classList.toggle("celula-desbotada", !ativa && estadoFiltro.rotas.size);
+            });
+        }
+
+        // -------------------------
+        // Plotar pontos (limpa e recria)
+        // -------------------------
+        function plotarPontos(lista) {
+
+            // remove anteriores
+            marcadores.forEach(m => map.removeLayer(m));
+            marcadores = [];
+
+            lista.forEach(p => {
+                if (!p.LATITUDE || !p.LONGITUDE) return;
+                // style
+                const rotaColor = p.__corRota || corRotaBase;
+                const dia = (p['DIA VISITA REAL'] || '').toUpperCase();
+                const border = (borderStyle[dia]) || '#7c3aed';
+                const f = (p['FREQ VISITA REAL'] || '').toUpperCase();
+                const fs = freqStyle[f] || { radius: 8, dash: '2 5' };
+
+                const mk = L.circleMarker([p.LATITUDE, p.LONGITUDE], {
+                    radius: fs.radius,
+                    fillColor: rotaColor,
+                    fillOpacity: 1,
+                    color: border,
+                    weight: 3.5,
+                    dashArray: fs.dash
+                }).addTo(map);
+
+                mk._info = p;
+                // console.log(["OBS"])
+                mk.bindPopup(`
+                    Cód. Softsite: <b>${p["COD. SOFTSITE"]}</b> <br>
+                    CGC/CNPJ: <b>${p["CGC/CNPJ"]}</b><br>
+                    Nome Cliente: <b>${p["FANTASIA"] + " - " + p["RAZAO SOCIAL"]}</b><br>
+                    Data Cadastro: <b> ${p["DT CADASTRO"]}</b><br>
+                    Rota: <b> <span class="link-rota" onclick="filtrarPorRota('${p["ROTA REAL"]}')">
+                        ${p["ROTA REAL"]}
+                        </span> </b>RCA: <b>${p["RCA VENDEDOR"]}</b><br> 
+                    Vendedor: <b>[${p["PERFIL"]}] ${p["NOME VENDEDOR"]}</b><br>
+                    Freq. Visita: <b>${p["FREQ VISITA REAL"]} </b>Dia Visita: <b>${p["DIA VISITA REAL"]}</b><br>
+                    Status: <b> ${p["STATUS"]}</b>
+                    <br>
+                    <button 
+                        class="btn-obs"
+                        style="
+                            width:25%;
+                            padding:6px;
+                            border-radius:6px;
+                            border:none;
+                            background:#2563eb;
+                            color:#fff;
+                            cursor:pointer;
+                        ">
+                        📝
+                    </button>`, {
+                    className: "popup-transparente"
+                });
+                mk.on('click', () => registrarMedicao(mk.getLatLng()));
+                mk.on("popupopen", e => {
+                    const info = e.popup._source._info;
+                    const idx = dados.findIndex(d => d["CGC/CNPJ"] == info["CGC/CNPJ"]);
+
+                    indexEdicao = idx;          // índice real dentro de dados[]
+                    pontoEdicao = dados[idx];   // referência REAL ao objeto original
+
+                    // console.log(pontoEdicao)
+
+                    const btn = e.popup.getElement()?.querySelector(".btn-obs");
+                    if (!btn) return;
+
+                    btn.onclick = () => {
+                        // console.log(pontoEdicao)
+                        renderOBSfromJSON(pontoEdicao.OBS || "Sem observações",
+                            pontoEdicao["ROTA REAL"],
+                            pontoEdicao["DIA VISITA REAL"],
+                            pontoEdicao["FREQ VISITA REAL"]);
+                        abrirSidebarOBS();
+                    };
+                });
+                marcadores.push(mk);
+            });
+
+            // document.getElementById('contador').textContent = lista.length;
+            // atualizarListaPontos(lista);
+            // atualizarResumoFiltragem(lista);
+            // showToast(`🔎 ${dia ? dia : ''} ${f ? ' / ' + f : ''} → ${lista.length} pontos`);
+            if (lista.length > 0) {
+                const bounds = L.latLngBounds(lista.map(p => [p.LATITUDE, p.LONGITUDE]));
+                map.fitBounds(bounds, { padding: [13, 13], maxZoom: 20 });
+            }
+        }
+
+
+        // -------------------------
+        // atualizar lista lateral de pontos
+        // -------------------------
+        function atualizarListaPontos(lista) {
+            const el = document.getElementById('listaPontos'); el.innerHTML = '';
+            if (!lista.length) { el.innerHTML = '<div class="small-muted">Nenhum ponto</div>'; return; }
+            lista.slice(0, 100).forEach(p => {
+                const div = document.createElement('div'); div.className = 'item';
+                div.innerHTML = `<div class="title">${p['COD. SOFTSITE'] || p['CODIGO'] || ''} — ${p['FANTASIA'] || p['RAZAO SOCIAL'] || ''}</div>
+        <div class="meta">Rota: ${p['A1_XROTA'] || ''} • ${p['FREQ VISITA'] || ''} • ${p['DIA VISITA'] || ''}</div>`;
+                el.appendChild(div);
+            });
+        }
+
+        // -------------------------
+        // Filtrar: aplica filtros (rotas selecionadas + possivel dia/freq)
+        // -------------------------
+        function getSelectedRotas() {
+            const sel = document.getElementById('rotaSelect');
+            return Array.from(sel.selectedOptions).map(o => o.value).filter(Boolean);
+        }
+
+        function filtrar(diaSel, freqSel) {
+            const rotas = getSelectedRotas();
+            // build corPorRota
+            const corPorRota = {};
+            getSelectedRotas().forEach((r, i) => corPorRota[r] = coresRotas[i % coresRotas.length]);
+
+            filtrados = dados.filter(d => {
+                if (rotas.length && !rotas.includes(d['ROTA REAL'])) return false;
+                if (diaSel && d['DIA VISITA REAL']?.toUpperCase() !== diaSel) return false;
+                if (freqSel && d['FREQ VISITA REAL']?.toUpperCase() !== freqSel) return false;
+                return true;
+            }).map(d => ({ ...d, __corRota: corPorRota[d['ROTA REAL']] || corRotaBase }));
+
+            // console.log(filtrados)
+            showToast(`🔎 ${diaSel ? diaSel : ''} ${freqSel ? ' / ' + freqSel : ''} → ${filtrados.length} pontos`);
+            atualizarResumoFiltragem(filtrados); // atualiza tabela com base no conjunto filtrado
+            atualizarLegenda(); // mostra cores selecionadas
+            plotarPontos(filtrados);
+        }
+
+        // -------------------------
+        // Resumo: preenche APENAS tbody e tfoot (com animação e zebra)
+        // -------------------------
+        function atualizarResumoFiltragem(pontos) {
+            // montar counts
+            const tabela = {};
+            diasOrdem.forEach(d => { tabela[d] = {}; frequencias.forEach(f => tabela[d][f] = 0); tabela[d]._total = 0; });
+
+            pontos.forEach(p => {
+                const dia = (p['DIA VISITA REAL'] || '').toUpperCase();
+                const freq = (p['FREQ VISITA REAL'] || '').toUpperCase();
+                if (diasOrdem.includes(dia) && frequencias.includes(freq)) {
+                    tabela[dia][freq]++; tabela[dia]._total++;
+                }
+            });
+
+            // preencher tbody
+            const tbody = document.getElementById('resumoBody');
+            tbody.innerHTML = ''; // easy replace (only tbody)
+            diasOrdem.forEach(d => {
+                const tr = document.createElement('tr');
+                const color = (borderStyle[d]) || '#7c3aed';
+                tr.innerHTML = `<td style="font-weight:700; color:${color}">${d}</td>` +
+                    frequencias.map(f => `<td class="count-cell" data-dia="${d}" data-freq="${f}"><span class="count-text">${tabela[d][f].toLocaleString('pt-BR')}</span></td>`).join('') +
+                    `<td class="tot-dia" data-dia="${d}">${tabela[d]._total.toLocaleString('pt-BR')}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            // preencher footer (totais por frequencia e total geral)
+            const foot = document.getElementById('resumoFoot');
+            const totaisFreq = {};
+            let totalGeral = 0;
+            frequencias.forEach(f => {
+                const tot = diasOrdem.reduce((acc, d) => acc + tabela[d][f], 0);
+                totaisFreq[f] = tot.toLocaleString('pt-BR'); totalGeral += tot;
+            });
+            foot.innerHTML = `<tr>
+            <td style="font-weight:700">Total Visitas</td>
+            ${frequencias.map(f => `<td class="tot-freq" data-freq="${f}">${totaisFreq[f].toLocaleString('pt-BR')}</td>`).join('')}
+            <td class="tot-geral">${totalGeral.toLocaleString('pt-BR')}</td>
+            </tr>`;
+
+            // anima: destacar valores que mudaram (simple pop)
+            tbody.querySelectorAll('.count-text').forEach(el => {
+                el.style.transform = 'translateY(-6px)'; el.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    el.style.transition = 'all .28s ease'; el.style.transform = 'translateY(0)'; el.style.opacity = '1';
+                });
+            });
+
+            // add event delegation for clicks (tbody)
+            // We remove previous handlers by replacing tbody? we re-created it so bind fresh
+            tbody.addEventListener('click', tbodyClickHandler);
+
+            // bind footer clicks (tot-freq, tot-geral)
+            foot.querySelectorAll('.tot-freq').forEach(td => {
+                td.onclick = () => {
+                    const freq = td.dataset.freq;
+                    destacarTabela(cell => cell.dataset?.freq === freq);
+                    const rotas = getSelectedRotas();
+                    // build corPorRota
+                    const corPorRota = {};
+                    getSelectedRotas().forEach((r, i) => corPorRota[r] = coresRotas[i % coresRotas.length]);
+
+                    const plot = filtrados.filter(d => {
+                        if (freq && d['FREQ VISITA REAL']?.toUpperCase() !== freq) return false;
+                        return true;
+                    }).map(d => ({ ...d, __corRota: corPorRota[d['ROTA REAL']] || corRotaBase }));
+                    plotarPontos(plot)
+                };
+            });
+            const totG = foot.querySelector('.tot-geral');
+            if (totG) totG.onclick = () => {
+                limparDestaquesTabela();
+                filtrar(undefined, undefined);
+            };
+        }
+
+        // -------------------------
+        // tbody click handler (delegation)
+        // -------------------------
+        function tbodyClickHandler(e) {
+            const td = e.target.closest('td');
+            if (!td) return;
+            if (td.classList.contains('tot-dia')) {
+                const dia = td.dataset.dia;
+                destacarTabela(cell => cell.dataset?.dia === dia);
+                const rotas = getSelectedRotas();
+                // build corPorRota
+                const corPorRota = {};
+                getSelectedRotas().forEach((r, i) => corPorRota[r] = coresRotas[i % coresRotas.length]);
+
+                const plot = filtrados.filter(d => {
+                    if (dia && d['DIA VISITA REAL']?.toUpperCase() !== dia) return false;
+                    return true;
+                }).map(d => ({ ...d, __corRota: corPorRota[d['ROTA REAL']] || corRotaBase }));
+                plotarPontos(plot)
+                return;
+            }
+            if (td.dataset && td.dataset.dia && td.dataset.freq) {
+                const dia = td.dataset.dia;
+                const freq = td.dataset.freq;
+                destacarTabela(cell => cell.dataset?.dia === dia && cell.dataset?.freq === freq);
+                const rotas = getSelectedRotas();
+                // build corPorRota
+                const corPorRota = {};
+                getSelectedRotas().forEach((r, i) => corPorRota[r] = coresRotas[i % coresRotas.length]);
+
+                const plot = filtrados.filter(d => {
+                    if (dia && d['DIA VISITA REAL']?.toUpperCase() !== dia) return false;
+                    if (freq && d['FREQ VISITA REAL']?.toUpperCase() !== freq) return false;
+                    return true;
+                }).map(d => ({ ...d, __corRota: corPorRota[d['ROTA REAL']] || corRotaBase }));
+                plotarPontos(plot)
+            }
+        }
+
+        // -------------------------
+        // destaque visual para tabela (aplica classes)
+        // -------------------------
+        function destacarTabela(cond) {
+            // all cells (including footer's tot-freq)
+            document.querySelectorAll('#resumoTable td').forEach(td => {
+                td.classList.remove('cell-selected', 'cell-faded');
+                try {
+                    if (cond(td)) td.classList.add('cell-selected');
+                    else td.classList.add('cell-faded');
+                } catch (e) { }
+            });
+        }
+        function limparDestaquesTabela() {
+            document.querySelectorAll('#resumoTable td').forEach(td => {
+                td.classList.remove('cell-selected', 'cell-faded');
+            });
+        }
+
+        // -------------------------
+        // Medição (simples)
+        // -------------------------
+        function ativarMedicao() {
+            modoMedicao = true; pontosMed = [];
+            document.getElementById('btnMedir').textContent = '📍 Clique 2x';
+            showToast('Modo medir ativado — clique 2 pontos no mapa');
+        }
+        function registrarMedicao(latlng) {
+            if (!modoMedicao) return;
+            pontosMed.push(latlng);
+            if (pontosMed.length === 2) {
+                const [a, b] = pontosMed;
+                const dist = (map.distance(a, b) / 1000).toFixed(2);
+                if (linhaMed) map.removeLayer(linhaMed);
+                if (popupMed) map.removeLayer(popupMed);
+                linhaMed = L.polyline([a, b], { color: '#ff7b00', dashArray: '6 6' }).addTo(map);
+                popupMed = L.popup({ closeOnClick: false, autoClose: false }).setLatLng([(a.lat + b.lat) / 2, (a.lng + b.lng) / 2]).setContent(`📐 ${dist} km`).openOn(map);
+                modoMedicao = false; pontosMed = [];
+                document.getElementById('btnMedir').textContent = '📏 Medir';
+            }
+        }
+        function limparMedicao() {
+            if (linhaMed) map.removeLayer(linhaMed);
+            if (popupMed) map.removeLayer(popupMed);
+            linhaMed = popupMed = null; modoMedicao = false;
+            document.getElementById('btnMedir').textContent = '📏 Medir';
+            showToast('Medição limpa');
+        }
+
+        // -------------------------
+        // Buscar múltiplos softsite (separados por ;) e abrir popups mantendo abertos
+        // -------------------------
+        function abrirPorSoftsiteMulti(valor) {
+            if (!valor) { showToast('Digite um código'); return; }
+            const cods = valor.split(';').map(s => s.trim()).filter(Boolean);
+
+            if (!cods.length) return;
+            let primeiro = null;
+            cods.forEach(cod => {
+                const ponto = dados.find(d => (d['CGC/CNPJ'] || '').toString().includes(cod.replace(/\D/g, '')));
+                if (!ponto) { console.warn('nao achou', cod); showToast(`nao achou ${cod}`); return; }
+                if (!primeiro) primeiro = ponto;
+                // encontra marcador
+                const m = marcadores.find(mm => (mm._info && ((mm._info['COD. SOFTSITE'] || mm._info['CODIGO']) || '').toString().includes(ponto['COD. SOFTSITE'] || ponto['CODIGO'] || '')));
+                if (m) m.openPopup();
+            });
+            if (primeiro) map.setView([primeiro.LATITUDE, primeiro.LONGITUDE], 15);
+        }
+
+        // -------------------------
+        // Utils: atualizar legenda por rotas selecionadas
+        // -------------------------
+        function getSelectedTextRotas() {
+            const sel = document.getElementById('rotaSelect');
+            return Array.from(sel.selectedOptions).map(o => o.text.split(' ').slice(0, 3).join(" ")).filter(Boolean);
+        }
+        function atualizarLegenda() {
+            const sel = getSelectedTextRotas();
+            const legenda = document.getElementById('legenda');
+            if (!sel.length) { legenda.innerHTML = '<div class="small-muted">Selecione rotas para ver legenda</div>'; return; }
+            legenda.innerHTML = '';
+            sel.forEach((r, i) => {
+                const color = coresRotas[i % coresRotas.length];
+                const div = document.createElement('div'); div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.gap = '8px'; div.style.marginBottom = '6px';
+                const sw = document.createElement('div'); sw.style.width = '14px'; sw.style.height = '14px'; sw.style.borderRadius = '4px'; sw.style.background = color;
+                const txt = document.createElement('div'); txt.textContent = `${r}`; txt.style.fontSize = '11px';
+                div.appendChild(sw); div.appendChild(txt); legenda.appendChild(div);
+            });
+        }
+
+        // -------------------------
+        // apos carregar dados: fill controls and show all
+        // -------------------------
+        function aposCarregarDados() {
+            preencherSelectRotas();
+            // set route colors initially blank
+            dados.forEach(d => d.__corRota = corRotaBase);
+            // plot all
+            // gerarResumoRotaVendedor(dados);
+            atualizarResumoFiltragem(dados);
+            plotarPontos(dados);
+        }
+
+        // -------------------------
+        // File input handling (user upload)
+        // -------------------------
+        document.getElementById('fileInput').addEventListener('change', e => {
+            const f = e.target.files[0]; if (!f) return;
+            showToast('Carregando CSV...');
+            Papa.parse(f, {
+                header: true, skipEmptyLines: true, complete: res => {
+                    dados = res.data.map(r => normalizeRow(r));
+                    filtrados = dados
+                    aposCarregarDados();
+                    showToast('CSV carregado');
+                }
+            });
+        });
+
+        // buscar button
+        document.getElementById('btnBuscar').addEventListener('click', () => {
+            const val = document.getElementById('buscaSoftsite').value.trim();
+            abrirPorSoftsiteMulti(val);
+        });
+        document.getElementById('btnReset').addEventListener('click', () => {
+            document.getElementById('rotaSelect').selectedIndex = -1;
+            document.getElementById('buscaSoftsite').value = '';
+            limparDestaquesTabela();
+            limparMedicao()
+            plotarPontos(dados);
+            atualizarLegenda();
+            // atualizarResumoFiltragem(dados);
+        });
+
+        // medir buttons
+        document.getElementById('btnMedir').addEventListener('click', ativarMedicao);
+        document.getElementById('btnLimparMed').addEventListener('click', limparMedicao);
+
+        // quando rota select muda, dispara filtro e legenda
+        document.getElementById('rotaSelect').addEventListener('change', () => {
+
+            // assign colors for selected rotas
+            const rotas = getSelectedRotas();
+            rotas.forEach((r, i) => {
+                dados.filter(d => d['ROTA REAL'] === r).forEach(dd => dd.__corRota = coresRotas[i % coresRotas.length]);
+            });
+            // reset others to neutral if not selected
+            dados.forEach(d => { if (!rotas.includes(d['ROTA REAL'])) d.__corRota = corRotaBase; });
+            atualizarLegenda();
+            filtrar(undefined, undefined);
+        });
+
+
+        function gerarResumoRotaVendedor(pontos) {
+
+            const dias = ["SEG", "TER", "QUA", "QUI", "SEX"];
+            const freqs = ["M", "S", "QI", "QP"];
+
+            const mapa = {};
+
+            pontos.forEach(p => {
+
+                const rota = p["ROTA REAL"] || "SEM ROTA";
+                const vendedor = p["NOME VENDEDOR"] || "SEM VENDEDOR";
+                const dia = p["DIA VISITA REAL"]?.trim()?.toUpperCase();
+                const freq = p["FREQ VISITA REAL"]?.trim()?.toUpperCase();
+
+                if (!dias.includes(dia) || !freqs.includes(freq)) return;
+
+                const key = `${rota}|||${vendedor}`;
+
+                if (!mapa[key]) {
+                    mapa[key] = { rota, vendedor, dados: {} };
+                    dias.forEach(d => {
+                        mapa[key].dados[d] = {};
+                        freqs.forEach(f => mapa[key].dados[d][f] = 0);
+                    });
+                }
+
+                mapa[key].dados[dia][freq]++;
+            });
+
+            // ===== HEAD =====
+            let head = `<tr><th>Rota</th><th>Vendedor</th>`;
+            dias.forEach(d => freqs.forEach(f => head += `<th>${d}-${f}</th>`));
+            head += `<th>Total</th></tr>`;
+            resumoHead.innerHTML = head;
+
+            // ===== BODY =====
+            let body = "";
+            const totalColunas = {};
+
+            dias.forEach(d => freqs.forEach(f => totalColunas[`${d}-${f}`] = 0));
+
+            Object.values(mapa).forEach(l => {
+                let totalLinha = 0;
+                body += `<tr><td>${l.rota}</td><td>${l.vendedor}</td>`;
+                dias.forEach(d => {
+                    freqs.forEach(f => {
+                        const v = l.dados[d][f];
+                        totalLinha += v;
+                        totalColunas[`${d}-${f}`] += v;
+                        body += `
+                    <td class="cel-filtro"
+                        data-rota="${l.rota}
+                        data-dia="${d}"
+                        data-freq="${f}">
+                        ${v}
+                    </td>`;
+                    });
+                });
+
+                body += `<td>${totalLinha}</td></tr>`;
+            });
+
+            resumoBody.innerHTML = body;
+
+            // ===== FOOT =====
+            let foot = `<tr><td colspan="2">Total Geral</td>`;
+            let totalGeral = 0;
+
+            dias.forEach(d => {
+                freqs.forEach(f => {
+                    const t = totalColunas[`${d}-${f}`];
+                    totalGeral += t;
+                    foot += `<td>${t}</td>`;
+                });
+            });
+
+            foot += `<td>${totalGeral}</td></tr>`;
+            resumoFoot.innerHTML = foot;
+
+            // ===== CLIQUE → FILTRA MAPA =====
+            document.querySelectorAll(".tabela-corporativa td.clicavel").forEach(td => {
+                td.addEventListener("click", (e) => {
+
+                    const rota = cel.dataset.rota;
+                    const dia = cel.dataset.dia;
+                    const freq = cel.dataset.freq;
+
+                    // CTRL = múltiplas rotas
+                    if (e.ctrlKey) {
+                        if (estadoFiltro.rotas.has(rota)) {
+                            estadoFiltro.rotas.delete(rota);
+                        } else {
+                            estadoFiltro.rotas.add(rota);
+                        }
+                    } else {
+                        estadoFiltro.rotas.clear();
+                        estadoFiltro.rotas.add(rota);
+                    }
+
+                    estadoFiltro.dia = dia;
+                    estadoFiltro.freq = freq;
+
+                    destacarTabela();
+                    aplicarFiltroTabela();
+                });
+            });
+        }
+
+        const sidebar = document.getElementById("sidebarObs");
+        const overlaySidebar = document.getElementById("overlaySidebar");
+        const sidebarConteudo = document.getElementById("sidebarConteudo");
+        const btnFecharSidebar = document.getElementById("btnFecharSidebar");
+
+        function abrirSidebarOBS(texto) {
+            // console.log(texto)
+            // sidebarConteudo.textContent = texto || "Sem observações.";
+            sidebar.classList.add("open");
+            overlaySidebar.classList.add("open");
+        }
+
+        function fecharSidebarOBS() {
+            sidebar.classList.remove("open");
+            overlaySidebar.classList.remove("open");
+        }
+
+        btnFecharSidebar.addEventListener("click", fecharSidebarOBS);
+        overlaySidebar.addEventListener("click", fecharSidebarOBS);
+
+        function tipoEvento(evento) {
+            return evento.tipo || "info";
+        }
+
+        function iconeEvento(tipo) {
+            return {
+                negado: "❌",
+                aprovado: "✅",
+                ajuste: "✏️",
+                info: "ℹ️"
+            }[tipo] || "ℹ️";
+        }
+
+        function ordenarPorDataHora(lista) {
+            return lista.sort((a, b) => {
+                const da = new Date(`${a.data} ${a.hora}`);
+                const db = new Date(`${b.data} ${b.hora}`);
+                return db - da; // mais recente primeiro
+            });
+        }
+        function normalizarOBS(obs) {
+            if (!obs) return [];
+
+            // Se vier como string JSON
+            if (typeof obs === "string") {
+                try {
+                    obs = JSON.parse(obs);
+                } catch {
+                    return [];
+                }
+            }
+
+            // Se vier um único objeto
+            if (!Array.isArray(obs)) {
+                obs = [obs];
+            }
+
+            return obs.map(o => ({
+                data: o.data || "",
+                hora: o.hora || "",
+                usuario: o.usuario || "Sistema",
+                tipo: o.tipo || "info",
+                mensagem: o.mensagem || "",
+                // historico: Array.isArray(o.historico) ? o.historico : []
+            }));
+        }
+
+        function capitalizarFrase(str) {
+            return str
+                .toLowerCase()
+                .split(" ")
+                .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+                .join(" ");
+        }
+
+        function renderOBSfromJSON(obs, rota, dia, freq) {
+            const container = document.getElementById("sidebarConteudo");
+            container.innerHTML = "";
+
+
+            document.getElementById("novaRota").value = rota
+            document.getElementById("novoDiaVisita").value = dia
+            document.getElementById("novaFreqVisita").value = freq
+            document.getElementById("NovaOBS").value = ''
+            document.getElementById("logAlteracoes").innerHTML = ''
+
+            const entradas = ordenarPorDataHora(normalizarOBS(obs));
+
+            if (!entradas.length) {
+                container.innerHTML = "<div class='small-muted'>Sem observações</div>";
+                return;
+            }
+
+            const timeline = document.createElement("div");
+            timeline.className = "obs-timeline";
+
+            entradas.forEach(e => {
+                const tipo = tipoEvento(e);
+                const item = document.createElement("div");
+                item.className = "obs-item";
+
+                item.innerHTML = `
+                    <div class="obs-card">
+                        <div class="obs-header">
+                            <div class="obs-icon ${tipo}">
+                                ${iconeEvento(tipo)}
+                            </div>
+                            <div class="obs-user">${e.usuario}</div>
+                            <div class="obs-meta">
+                                ${e.data} • ${e.hora}
+                            </div>
+                        </div>
+
+
+                        <div class="obs-msg">
+                            ${capitalizarFrase(e.mensagem)}
+                        </div>
+                    </div>
+        `;
+
+
+                timeline.appendChild(item);
+            });
+
+            container.appendChild(timeline);
+        }
+
+        function log() {
+            if (!pontoEdicao) return;
+
+            const rotaNova = document.getElementById("novaRota").value.trim();
+            const diaNovo = document.getElementById("novoDiaVisita").value;
+            const freqNova = document.getElementById("novaFreqVisita").value;
+
+            const diffs = [];
+            if (rotaNova && rotaNova !== pontoEdicao["ROTA REAL"]) {
+                diffs.push(`[Rota: ${pontoEdicao["ROTA REAL"] || "-"} => ${rotaNova}]`);
+            }
+            if (diaNovo && diaNovo !== pontoEdicao["DIA VISITA REAL"]) {
+                diffs.push(`[Dia Visita: ${pontoEdicao["DIA VISITA REAL"] || "-"} => ${diaNovo}]`);
+            }
+            if (freqNova && freqNova !== pontoEdicao["FREQ VISITA REAL"]) {
+                diffs.push(`[Frequencia: ${pontoEdicao["FREQ VISITA REAL"] || "-"} => ${freqNova}]`);
+            }
+
+            const logBox = document.getElementById("logAlteracoes");
+            if (!diffs.length) {
+                logBox.innerHTML = "";
+                return;
+            }
+
+            logBox.innerHTML = `
+                ${diffs.join("<br>")}
+            `;
+
+        }
+
+        document.getElementById("btnSalvarOBS")?.addEventListener("click", () => {
+            if (!pontoEdicao) return;
+            // console.log(pontoEdicao)
+
+            const rotaNova = document.getElementById("novaRota").value.trim();
+            const diaNovo = document.getElementById("novoDiaVisita").value;
+            const freqNova = document.getElementById("novaFreqVisita").value;
+            const obsTexto = document.querySelector(".controle textarea").value.trim() || 'Motivo/OBS não informado pelo usuario';
+
+            const alteracoes = document.getElementById("logAlteracoes").textContent.trim();
+
+            // ✍️ ATUALIZA O OBJETO DENTRO DO ARRAY
+            const alvo = dados[indexEdicao];
+
+            if (rotaNova) alvo["ROTA REAL"] = rotaNova; alvo["ROTA"] = rotaNova;
+            if (diaNovo) alvo["DIA VISITA REAL"] = diaNovo; alvo["DIA VISITA"] = diaNovo;
+            if (freqNova) alvo["FREQ VISITA REAL"] = freqNova; alvo["FREQ VISITA"] = freqNova;
+
+            // garantir formato JSON
+            let arr = [];
+            if (typeof pontoEdicao.OBS === "string") {
+                try { arr = JSON.parse(pontoEdicao.OBS) } catch { arr = [] }
+            } else if (Array.isArray(pontoEdicao.OBS)) {
+                arr = pontoEdicao.OBS;
+            }
+
+            if (obsTexto) {
+                const agora = new Date();
+                arr.unshift({
+                    data: agora.toISOString().slice(0, 10),
+                    hora: agora.toTimeString().slice(0, 5),
+                    usuario: "Sistema",
+                    tipo: "ajuste",
+                    mensagem: alteracoes + ' | \n ' + capitalizarFrase(obsTexto)
+                });
+            }
+            alvo.OBS = arr;
+            alvo.__alterado = true;
+
+            // 6️⃣ Feedback ao usuário
+            showToast("Alterações salvas!");
+            fecharSidebarOBS();
+
+            // 5️⃣ Replotar mapa e resumo
+            // atualizarResumoFiltragem(dados);
+            // plotarPontos(dados);
+            filtrar(undefined, undefined);
+
+
+        });
+
+
+        function getRegistrosAlterados() {
+            return dados.filter(d => d.__alterado === true);
+        }
+        function exportarExcelAtualizado() {
+            const alterados = getRegistrosAlterados();
+            if (!alterados.length) {
+                alert("Nenhum registro alterado.");
+                return;
+            }
+
+            const headers = headersOriginais.length ? headersOriginais : Object.keys(alterados[0]);
+
+            const rows = [];
+            rows.push(headers);
+
+            alterados.forEach(obj => {
+                const row = headers.map(h => {
+                    if (h === "OBS") return JSON.stringify(obj[h] ?? "");
+                    return obj[h] ?? "";
+                });
+                rows.push(row);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, "Alterados");
+
+            XLSX.writeFile(
+                wb,
+                `clientes_alterados_${new Date().toISOString().slice(0, 10)}.xlsx`
+            );
+        }
+        document.getElementById("btnExportExcel")?.addEventListener("click", exportarExcelAtualizado);
+
+        // exporta png do mapa
+        function getNomeRotaSelecionada() {
+            const sel = document.getElementById("rotaSelect");
+            console.log(sel.selectedIndex)
+            if (!sel || sel.selectedIndex < 0 || sel.selectedIndex > 1) return "todas_rotas";
+
+            const opt = sel.options[sel.selectedIndex];
+            return opt.textContent
+                .replace(/[^\w\s\-—]/g, "") // remove caracteres inválidos
+                .trim()
+                .replace(/\s+/g, "_");
+        }
+        function exportarMapaResumoPNG() {
+            const wrapper = document.getElementById("exportWrapper");
+            if (!wrapper) return;
+
+            html2canvas(wrapper, {
+                scale: 2,                 // alta resolução
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                scrollX: 0,
+                scrollY: -window.scrollY
+            }).then(canvas => {
+                const nomeRota = getNomeRotaSelecionada();
+                const link = document.createElement("a");
+
+                link.download = `${nomeRota}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+        function ativarAutoSelect() {
+            document.querySelectorAll('.buscaSoftsite').forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.select();
+                });
+
+                input.addEventListener('mouseup', function (e) {
+                    e.preventDefault(); // evita perder seleção
+                });
+            });
+        }
+        function filtrarPorRota(rota) {
+            const sel = document.getElementById("rotaSelect");
+            if (!sel) return;
+
+            // seleciona a rota no select
+            sel.value = rota;
+
+            // dispara o mesmo evento que o usuário faria
+            sel.dispatchEvent(new Event("change"));
+
+            // fecha popup aberto
+            if (map._popup) map.closePopup();
+        }
+
+        // inicializa
+        initMap();
+        ativarAutoSelect();
+        // Expose some helpers for console (dev)
+        window._dados = () => dados;
+        window.gerarResumoRotaVendedor = gerarResumoRotaVendedor;
+        window.filtrar = filtrar;
+    </script>
+
+    <script src="/comercial/src/shared/toast.js"></script>
+
+    <script src="/comercial/src/assets/js/color-modes.js"></script>
+    <script src="/comercial/src/assets/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
